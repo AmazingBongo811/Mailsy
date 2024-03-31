@@ -63,12 +63,6 @@ program
   .command("d")
   .description("Delete account")
   .action(() => utils.deleteAccount());
-
-// show details of the account
-program
-  .command("me")
-  .description("Show details of the account")
-  .action(() => utils.showDetails());
  
 
 program.parse();

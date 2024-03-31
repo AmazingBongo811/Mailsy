@@ -162,44 +162,7 @@ const deleteAccount = async () => {
   }
 };
 
-const showDetails = async () => {
-  // start the spinner
-  const spinner = ora("fetching details...").start();
 
-  const accountIndex = await accountSelector();
-
-  await db.read();
-
-  const account = db.data.accounts.at(accountIndex);
-
-  // if the account is null then the account has not been created yet
-  if (account === null) {
-    // stop the spinner
-    spinner.stop();
-
-    console.log(`${chalk.redBright("Account not created yet")}`);
-    return;
-  }
-
-  // get the account details
-  const { data } = await axios.get(
-    `https://api.mail.tm/accounts/${account.id}`,
-    {
-      headers: {
-        Authorization: `Bearer ${account.token.token}`,
-      },
-    }
-  );
-
-  // stop the spinner
-  spinner.stop();
-
-  // display the account details
-  console.log(`
-    Email: ${chalk.underline.green(data.address)}
-    createdAt: ${chalk.green(new Date(data.createdAt).toLocaleString())}
-  `);
-};
 
 // open specific email
 const openEmail = async (email, mails, account ) => {
@@ -287,7 +250,7 @@ const utils = {
   createAccount,
   fetchMessages,
   deleteAccount,
-  showDetails,
+ 
   openEmail,
   displayAccounts,
 
