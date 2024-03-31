@@ -21,10 +21,10 @@ program
 // Generate a new email
 program
   .command("g")
-  .description("Generate a new email")
+  .description("Generate a new email account")
   .action(() => utils.createAccount());
 
-  program.command("a").description("display all emails").action(async () => {utils.displayAccounts()});
+  program.command("a").description("display all email accounts").action(async () => {utils.displayAccounts()});
 
 // fetch messages from the inbox
 program
