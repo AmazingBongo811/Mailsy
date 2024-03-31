@@ -1,18 +1,23 @@
 import axios from "axios";
 import fs from "fs/promises";
 import copy from "./copy.js";
-import { Low, JSONFile } from "lowdb";
+import { Low } from "lowdb";
+import { JSONFile } from 'lowdb/node';
 import ora from "ora";
 import chalk from "chalk";
 import path from "path";
 import { fileURLToPath } from "url";
 import open from "open";
+import { Console } from "console";
+import inquirer from "inquirer";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const adapter = new JSONFile(path.join(dirname, "../data/account.json"));
 
-const db = new Low(adapter);
+const db = new Low(adapter, { accounts: [] });
+
+
 
 const createAccount = async () => {
   // start the spinner
@@ -20,13 +25,6 @@ const createAccount = async () => {
 
   // read the account data from file
   await db.read();
-
-  // if account already exists, then show message and return
-  if (db.data !== null) {
-    spinner.stop();
-    console.log(`${chalk.redBright("Account already exists")}`);
-    return;
-  }
 
   // get the available email domains
   const { data } = await axios.get("https://api.mail.tm/domains?page=1");
@@ -62,8 +60,7 @@ const createAccount = async () => {
     data.token = token;
 
     //write the data object to the account.json file
-    db.data = data;
-
+    db.data.accounts.push(data);
     await db.write();
 
     // stop the spinner
@@ -80,12 +77,17 @@ const createAccount = async () => {
 };
 
 const fetchMessages = async () => {
+
+  const accountIndex = await accountSelector();
+
   // start the spinner
   const spinner = ora("fetching...").start();
 
   await db.read();
 
-  const account = db.data;
+  const account = db.data.accounts.at(accountIndex);
+
+
 
   if (account === null) {
     // stop the spinner
@@ -113,17 +115,21 @@ const fetchMessages = async () => {
     console.log(`${chalk.redBright("No Emails")}`);
     return null;
   } else {
-    return emails;
+    return [emails, account];
   }
 };
 
 const deleteAccount = async () => {
+
+
+  const accountIndex = await accountSelector();
+
   // start the spinner
   const spinner = ora("deleting...").start();
 
   await db.read();
 
-  const account = db.data;
+  const account = db.data.accounts.at(accountIndex);
 
   try {
     // if the account is null, then the account has not been created yet
@@ -141,8 +147,10 @@ const deleteAccount = async () => {
       },
     });
 
-    // delete the account.json file
-    await fs.unlink(path.join(dirname, "../data/account.json"));
+    // delete the account from account.json file
+    db.data.accounts.splice(accountIndex, 1);
+    await db.write();
+
 
     // stop the spinner
     spinner.stop();
@@ -150,6 +158,7 @@ const deleteAccount = async () => {
     console.log(`${chalk.blue("Account deleted")}`);
   } catch (error) {
     console.error(error.message);
+    spinner.stop();
   }
 };
 
@@ -157,9 +166,11 @@ const showDetails = async () => {
   // start the spinner
   const spinner = ora("fetching details...").start();
 
+  const accountIndex = await accountSelector();
+
   await db.read();
 
-  const account = db.data;
+  const account = db.data.accounts.at(accountIndex);
 
   // if the account is null then the account has not been created yet
   if (account === null) {
@@ -191,18 +202,12 @@ const showDetails = async () => {
 };
 
 // open specific email
-const openEmail = async (email) => {
+const openEmail = async (email, mails, account ) => {
   try {
     // start the spinner
     const spinner = ora("opening...").start();
 
-    await db.read();
-
-    const account = db.data;
-
-    const mails = await fetchMessages();
-
-    const mailToOpen = mails[email - 1];
+    const mailToOpen = mails[email];
 
     // get email html content
     const { data } = await axios.get(
@@ -230,6 +235,53 @@ const openEmail = async (email) => {
   }
 };
 
+// display the accounts
+const accountSelector = async () => {
+
+  await db.read();
+
+  const accounts = db.data.accounts;
+
+  // display accounts using inquirer
+  return await inquirer.prompt([
+    {
+      type: "list",
+      name: "account",
+      message: "Select an account",
+      choices: accounts.map((account, index) => ({
+        name: `${index + 1}. ${chalk.underline.blue(
+          account.address
+        )}`,
+        value: index,
+      })),
+    },
+  ]);
+};
+
+const displayAccounts = async () => {
+  await db.read();
+
+  const accounts = db.data.accounts;
+
+  if (accounts.length === 0) {
+    console.log(`${chalk.redBright("No accounts created yet")}`);
+    return;
+  }
+
+  // display the accounts
+  accounts.forEach((account, index) => {
+    console.log(
+      `${index + 1}. ${chalk.underline.blue(account.address)} - ${chalk.yellow(
+        "Created At"
+      )}: ${new Date(account.createdAt).toLocaleString()}`
+    );
+  });
+
+}
+
+
+
+
 // export the functions using es6 syntax
 const utils = {
   createAccount,
@@ -237,6 +289,8 @@ const utils = {
   deleteAccount,
   showDetails,
   openEmail,
+  displayAccounts,
+
 };
 
 export default utils;

@@ -24,13 +24,15 @@ program
   .description("Generate a new email")
   .action(() => utils.createAccount());
 
+  program.command("a").description("display all emails").action(async () => {utils.displayAccounts()});
+
 // fetch messages from the inbox
 program
   .command("m")
   .description("Fetch messages from the inbox")
   .action(async () => {
     try {
-      const emails = await utils.fetchMessages();
+      const [emails, account] = await utils.fetchMessages();
 
       if (!emails) return;
 
@@ -44,13 +46,13 @@ program
             name: `${index + 1}. ${chalk.underline.blue(
               email.subject
             )} - ${chalk.yellow("From:")}  ${email.from.address}`,
-            value: index + 1,
+            value: index ,
           })),
         },
       ]);
 
       // open the email
-      await utils.openEmail(email);
+      await utils.openEmail(email, emails, account );
     } catch (error) {
       console.error(error.message);
     }
