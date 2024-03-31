@@ -221,25 +221,15 @@ const displayAccounts = async () => {
     return;
   }
 
-  // get the inbox count for each account
-  const inboxCount = new Map();
-  accounts.forEach((account, index) => {
-    getInboxCount(account).then((count) => {
-      inboxCount.set(index, count);
-    });
-  });
+const inboxCounts = await Promise.all(accounts.map(account => getInboxCount(account)));
 
-  // display the accounts
-  accounts.forEach((account, index) => {
-    console.log(
-      `${index + 1}. ${chalk.underline.blue(account.address)} (${chalk.green(inboxCount.get(index))}) - ${chalk.yellow(
-        "Created At"
-      )}: ${new Date(account.createdAt).toLocaleString()}`
-    );
-
-
+accounts.forEach((account, index) => {
+  console.log(
+    `${index + 1}. ${chalk.underline.blue(account.address)} (${chalk.green(inboxCounts[index])}) - ${chalk.yellow(
+      "Created At"
+    )}: ${new Date(account.createdAt).toLocaleString()}`
+  );
 });
-
 }
 
 const getInboxCount = async (account) => {
