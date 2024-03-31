@@ -192,23 +192,33 @@ const accountSelector = async () => {
   await db.read();
 
   const accounts = db.data.accounts;
-
+  
   // display accounts using inquirer
   const accountIndex =  await inquirer.prompt([
     {
       type: "list",
       name: "account",
       message: "Select an account",
-      choices: accounts.map((account, index) => ({
-        name: `${index + 1}. ${chalk.underline.blue(
-          account.address
-        )}`,
-        value: index,
-      })),
+      choices: [
+        ...accounts.map((account, index) => ({
+          name: `${index + 1}. ${chalk.underline.blue(
+            account.address
+          )}`,
+          value: index,
+        })),
+        {
+          name: "Exit",
+          value: -1
+        }
+      ],
     },
   ]);
-
+  if(accountIndex.account === -1) {
+    console.log("Exiting...");
+    process.exit(0);
+  }
   return accounts[accountIndex.account];
+  
 };
 
 const displayAccounts = async () => {
