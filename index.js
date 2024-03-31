@@ -32,7 +32,8 @@ program
   .description("Fetch messages from the inbox")
   .action(async () => {
     try {
-      const [emails, account] = await utils.fetchMessages();
+      const account = await utils.accountSelector();
+      const emails = await utils.fetchMessages(account);
 
       if (!emails) return;
 
@@ -62,7 +63,10 @@ program
 program
   .command("d")
   .description("Delete account")
-  .action(() => utils.deleteAccount());
+  .action(() => {
+    const account = utils.accountSelector();
+    utils.deleteAccount(account);
+  });
  
 
 program.parse();

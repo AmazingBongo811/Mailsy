@@ -76,17 +76,10 @@ const createAccount = async () => {
   }
 };
 
-const fetchMessages = async () => {
-
-  const accountIndex = await accountSelector();
+const fetchMessages = async (account) => {
 
   // start the spinner
   const spinner = ora("fetching...").start();
-
-  await db.read();
-
-  const account = db.data.accounts.at(accountIndex);
-
 
 
   if (account === null) {
@@ -115,21 +108,16 @@ const fetchMessages = async () => {
     console.log(`${chalk.redBright("No Emails")}`);
     return null;
   } else {
-    return [emails, account];
+    return emails;
   }
 };
 
-const deleteAccount = async () => {
+const deleteAccount = async (account) => {
 
-
-  const accountIndex = await accountSelector();
 
   // start the spinner
   const spinner = ora("deleting...").start();
 
-  await db.read();
-
-  const account = db.data.accounts.at(accountIndex);
 
   try {
     // if the account is null, then the account has not been created yet
@@ -165,7 +153,7 @@ const deleteAccount = async () => {
 
 
 // open specific email
-const openEmail = async (email, mails, account ) => {
+const openEmail = async (email, mails, account) => {
   try {
     // start the spinner
     const spinner = ora("opening...").start();
@@ -206,7 +194,7 @@ const accountSelector = async () => {
   const accounts = db.data.accounts;
 
   // display accounts using inquirer
-  return await inquirer.prompt([
+  const accountIndex =  await inquirer.prompt([
     {
       type: "list",
       name: "account",
@@ -219,6 +207,8 @@ const accountSelector = async () => {
       })),
     },
   ]);
+
+  return accounts[accountIndex.account];
 };
 
 const displayAccounts = async () => {
@@ -233,13 +223,25 @@ const displayAccounts = async () => {
 
   // display the accounts
   accounts.forEach((account, index) => {
-    console.log(
-      `${index + 1}. ${chalk.underline.blue(account.address)} - ${chalk.yellow(
-        "Created At"
-      )}: ${new Date(account.createdAt).toLocaleString()}`
-    );
+    getInboxCount(account).then((count) => {
+      console.log(
+        `${index + 1}. ${chalk.underline.blue(account.address)} (${chalk.green(count)}) - ${chalk.yellow(
+          "Created At"
+        )}: ${new Date(account.createdAt).toLocaleString()}`
+      );
+    });
+
   });
 
+}
+
+const getInboxCount = async (account) => {
+  const { data } = await axios.get("https://api.mail.tm/messages", {
+    headers: {
+      Authorization: `Bearer ${account.token.token}`,
+    },
+  });
+  return data["hydra:totalItems"];
 }
 
 
@@ -250,9 +252,9 @@ const utils = {
   createAccount,
   fetchMessages,
   deleteAccount,
- 
   openEmail,
   displayAccounts,
+  accountSelector,
 
 };
 
