@@ -221,17 +221,24 @@ const displayAccounts = async () => {
     return;
   }
 
-  // display the accounts
+  // get the inbox count for each account
+  const inboxCount = new Map();
   accounts.forEach((account, index) => {
     getInboxCount(account).then((count) => {
-      console.log(
-        `${index + 1}. ${chalk.underline.blue(account.address)} (${chalk.green(count)}) - ${chalk.yellow(
-          "Created At"
-        )}: ${new Date(account.createdAt).toLocaleString()}`
-      );
+      inboxCount.set(index, count);
     });
-
   });
+
+  // display the accounts
+  accounts.forEach((account, index) => {
+    console.log(
+      `${index + 1}. ${chalk.underline.blue(account.address)} (${chalk.green(inboxCount.get(index))}) - ${chalk.yellow(
+        "Created At"
+      )}: ${new Date(account.createdAt).toLocaleString()}`
+    );
+
+
+});
 
 }
 
