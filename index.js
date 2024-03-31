@@ -43,14 +43,19 @@ program
           type: "list",
           name: "email",
           message: "Select an email",
-          choices: emails.map((email, index) => ({
+          choices: [...emails.map((email, index) => ({
             name: `${index + 1}. ${chalk.underline.blue(
               email.subject
             )} - ${chalk.yellow("From:")}  ${email.from.address}`,
             value: index ,
-          })),
+          })), {name: "Exit", value: -1}],
         },
       ]);
+
+      if(email === -1) {
+        console.log("Exiting...");
+        process.exit(0);
+      }
 
       // open the email
       await utils.openEmail(email, emails, account );
