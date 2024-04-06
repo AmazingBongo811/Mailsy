@@ -17,14 +17,14 @@ program
   .description(
     "⚡️ Quickly generate a disposable email straight from terminal."
   );
-  
+
 // Generate a new email
 program
   .command("g")
   .description("Generate a new email account")
   .action(() => utils.createAccount());
 
-  program.command("a").description("display all email accounts").action(async () => {utils.displayAccounts()});
+program.command("a").description("display all email accounts").action(async () => { utils.displayAccounts() });
 
 // fetch messages from the inbox
 program
@@ -46,19 +46,19 @@ program
           choices: [...emails.map((email, index) => ({
             name: `${index + 1}. ${chalk.underline.blue(
               email.subject
-            )} - ${chalk.yellow("From:")}  ${email.from.address}`,
-            value: index ,
-          })), {name: "Exit", value: -1}],
+            )} - ${chalk.yellow("From:")}  ${email.from.address} ${chalk.yellow("Date:")} ${new Date(email.createdAt).toLocaleString()}`,
+            value: index,
+          })), { name: "Exit", value: -1 }],
         },
       ]);
 
-      if(email === -1) {
+      if (email === -1) {
         console.log("Exiting...");
         process.exit(0);
       }
 
       // open the email
-      await utils.openEmail(email, emails, account );
+      await utils.openEmail(email, emails, account);
     } catch (error) {
       console.error(error.message);
     }
@@ -72,6 +72,6 @@ program
     const account = utils.accountSelector();
     utils.deleteAccount(account);
   });
- 
+
 
 program.parse();
