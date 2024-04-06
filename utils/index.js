@@ -141,6 +141,8 @@ const deleteAccount = async (account) => {
   // Start the spinner
   const spinner = ora("deleting...").start();
 
+  await db.read();
+
   try {
     // If the account is null, then the account has not been created yet
     if (account === null) {
@@ -159,7 +161,9 @@ const deleteAccount = async (account) => {
     });
 
     // Delete the account from account.json file
-    db.data.accounts.splice(accountIndex, 1);
+    db.data.accounts = db.data.accounts.filter(
+      (acc) => acc.id !== account.id
+    );
     await db.write();
 
     // Stop the spinner

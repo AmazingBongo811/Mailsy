@@ -68,9 +68,9 @@ program
 program
   .command("d")
   .description("Delete account")
-  .action(() => {
-    const account = utils.accountSelector();
-    utils.deleteAccount(account);
+  .action(async () => {
+    const account = await utils.accountSelector();
+     await utils.deleteAccount(account);
   });
 
 
