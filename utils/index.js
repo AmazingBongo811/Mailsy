@@ -17,6 +17,25 @@ const adapter = new JSONFile(path.join(dirname, "../data/account.json"));
 
 const db = new Low(adapter, { accounts: [] });
 
+const messagesCountDb = new Low(new JSONFile(path.join(dirname, "../data/localInboxCount.json")), { messagesCount: [] });
+
+const writeInboxCountToLocal = async (accounts, messageCounts) => {
+  await messagesCountDb.read();
+  messagesCountDb.data.messagesCount = accounts.map((account, index) => ({
+    address: account.address,
+    count: messageCounts[index],
+  }));
+  await messagesCountDb.write();
+
+
+}
+
+const getLocalInboxCount = async (account) => {
+  await messagesCountDb.read();
+  const messageCount = messagesCountDb.data.messagesCount.find((messageCount) => messageCount.address === account.address);
+  return messageCount ? messageCount.count : 0;
+
+}
 
 
 const createAccount = async () => {
@@ -186,15 +205,15 @@ const openEmail = async (email, mails, account) => {
   }
 };
 
-// display the accounts
+
 const accountSelector = async () => {
 
   await db.read();
 
   const accounts = db.data.accounts;
-  
+
   // display accounts using inquirer
-  const accountIndex =  await inquirer.prompt([
+  const accountIndex = await inquirer.prompt([
     {
       type: "list",
       name: "account",
@@ -213,12 +232,12 @@ const accountSelector = async () => {
       ],
     },
   ]);
-  if(accountIndex.account === -1) {
+  if (accountIndex.account === -1) {
     console.log("Exiting...");
     process.exit(0);
   }
   return accounts[accountIndex.account];
-  
+
 };
 
 const displayAccounts = async () => {
@@ -231,15 +250,19 @@ const displayAccounts = async () => {
     return;
   }
 
-const inboxCounts = await Promise.all(accounts.map(account => getInboxCount(account)));
+  const inboxCounts = await Promise.all(accounts.map(account => getInboxCount(account)));
 
-accounts.forEach((account, index) => {
-  console.log(
-    `${index + 1}. ${chalk.underline.blue(account.address)} (${chalk.green(inboxCounts[index])}) - ${chalk.yellow(
-      "Created At"
-    )}: ${new Date(account.createdAt).toLocaleString()}`
-  );
-});
+  const localInboxCount = await Promise.all(accounts.map(account => getLocalInboxCount(account)));
+
+  accounts.forEach((account, index) => {
+    console.log(
+      `${index + 1}. ${chalk.underline.blue(account.address)} (${inboxCounts[index] > localInboxCount[index] ? chalk.green(inboxCounts[index]) : chalk.white(inboxCounts[index])}) - ${chalk.yellow(
+        "Created At"
+      )}: ${new Date(account.createdAt).toLocaleString()}`
+    );
+  });
+
+  writeInboxCountToLocal(accounts, inboxCounts);
 }
 
 const getInboxCount = async (account) => {
