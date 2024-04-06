@@ -1,31 +1,20 @@
-# Mailsy
+# Mailsy Multi Email
 
-![GitHub Repo stars](https://img.shields.io/github/stars/BalliAsghar/Mailsy?color=ff&style=for-the-badge)
+![GitHub Repo stars](https://img.shields.io/github/stars/AmazingBongo811/Mailsy?color=ff&style=for-the-badge)
 
 ⚡️ Quickly generate a disposable email.
 
-# Extensions
+Fork of [Mailsy](https://github.com/BalliAsghar/Mailsy) by [BalliAsghar](https://github.com/BalliAsghar)
 
-- [Alfred](https://github.com/BalliAsghar/mailsy-alfred)
-- [Raycast](https://www.raycast.com/BalliAsghar/mailsy)
+(Adds the ability to create multiple email addresses)
+
+
 
 ## Screenshots
 
 ![alt text](https://raw.githubusercontent.com/BalliAsghar/Mailsy/main/screenshot/Mailsy.png)
 
-## Installation
 
-Use the package manager [npm](https://www.npmjs.com/) to install Mailsy.
-
-```console
-npm install mailsy -g
-```
-
-Macos users can install mailsy via homebrew
-
-```console
-brew install mailsy
-```
 
 ## Usage
 
@@ -61,19 +50,14 @@ foo@bar:~$ mailsy d
 Account deleted
 ```
 
-**Details about Account**
+**Acounnts Inbox**
 
 ```console
-foo@bar:~$ mailsy me
+foo@bar:~$ mailsy a
 
- Email: random@random.com
- createdAt: 13/03/2022, 21:32:09
+ 1. random@random.com (8) - Created At: 3/31/2024 8:33:48 PM
 
 ```
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=BalliAsghar/Mailsy&type=Date)](https://star-history.com/#BalliAsghar/Mailsy&Date)
 
 ### FAQ
 
@@ -81,9 +65,6 @@ foo@bar:~$ mailsy me
 
 Mailsy is using [mail.tm](https://mail.tm/en/) API to generate a disposable email.
 
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 
