@@ -11,14 +11,19 @@ import open from "open";
 import { Console } from "console";
 import inquirer from "inquirer";
 
+// Importing necessary modules
+
+// Getting the directory name
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Setting up the database
 const adapter = new JSONFile(path.join(dirname, "../data/account.json"));
-
 const db = new Low(adapter, { accounts: [] });
 
+// Setting up the messages count database
 const messagesCountDb = new Low(new JSONFile(path.join(dirname, "../data/localInboxCount.json")), { messagesCount: [] });
 
+// Function to write inbox count to local
 const writeInboxCountToLocal = async (accounts, messageCounts) => {
   await messagesCountDb.read();
   messagesCountDb.data.messagesCount = accounts.map((account, index) => ({
@@ -26,83 +31,82 @@ const writeInboxCountToLocal = async (accounts, messageCounts) => {
     count: messageCounts[index],
   }));
   await messagesCountDb.write();
-
-
 }
 
+// Function to get local inbox count
 const getLocalInboxCount = async (account) => {
   await messagesCountDb.read();
   const messageCount = messagesCountDb.data.messagesCount.find((messageCount) => messageCount.address === account.address);
   return messageCount ? messageCount.count : 0;
-
 }
 
-
+// Function to create account
 const createAccount = async () => {
-  // start the spinner
+  // Start the spinner
   const spinner = ora("creating...").start();
 
-  // read the account data from file
+  // Read the account data from file
   await db.read();
 
-  // get the available email domains
+  // Get the available email domains
   const { data } = await axios.get("https://api.mail.tm/domains?page=1");
 
-  // get the first domain
+  // Get the first domain
   const domain = data["hydra:member"][0].domain;
 
-  // generate a random email address
+  // Generate a random email address
   const email = `${Math.random().toString(36).substring(7)}@${domain}`;
 
-  // generate a random password
+  // Generate a random password
   const password = Math.random().toString(36).substring(7);
 
   try {
+    // Create account
     const { data } = await axios.post("https://api.mail.tm/accounts", {
       address: email,
       password,
     });
 
-    // add password to the data object
+    // Add password to the data object
     data.password = password;
 
-    // copy the email to the clipboard
+    // Copy the email to the clipboard
     await copy(email);
 
-    // get Jwt token
+    // Get Jwt token
     const { data: token } = await axios.post("https://api.mail.tm/token", {
       address: email,
       password,
     });
 
-    // write token to a data object
+    // Write token to a data object
     data.token = token;
 
-    //write the data object to the account.json file
+    // Write the data object to the account.json file
     db.data.accounts.push(data);
     await db.write();
 
-    // stop the spinner
+    // Stop the spinner
     spinner.stop();
 
     console.log(
       `${chalk.blue("Account created")}: ${chalk.underline.green(email)}`
     );
   } catch (error) {
-    // stop the spinner
+    // Stop the spinner
     spinner.stop();
     console.error(`${chalk.redBright("Error")}: ${error.message}`);
   }
 };
 
+// Function to fetch messages
 const fetchMessages = async (account) => {
 
-  // start the spinner
+  // Start the spinner
   const spinner = ora("fetching...").start();
 
-
   if (account === null) {
-    // stop the spinner
+    // Stop the spinner
     spinner.stop();
 
     console.log(`${chalk.redBright("Account not created yet")}`);
@@ -110,19 +114,19 @@ const fetchMessages = async (account) => {
     return;
   }
 
-  // get the messages
+  // Get the messages
   const { data } = await axios.get("https://api.mail.tm/messages", {
     headers: {
       Authorization: `Bearer ${account.token.token}`,
     },
   });
-  // get the emails
+  // Get the emails
   const emails = data["hydra:member"];
 
-  // stop the spinner
+  // Stop the spinner
   spinner.stop();
 
-  // if there are no emails, then there are no messages
+  // If there are no emails, then there are no messages
   if (emails.length === 0) {
     console.log(`${chalk.redBright("No Emails")}`);
     return null;
@@ -131,35 +135,34 @@ const fetchMessages = async (account) => {
   }
 };
 
+// Function to delete account
 const deleteAccount = async (account) => {
 
-
-  // start the spinner
+  // Start the spinner
   const spinner = ora("deleting...").start();
 
-
   try {
-    // if the account is null, then the account has not been created yet
+    // If the account is null, then the account has not been created yet
     if (account === null) {
-      // stop the spinner
+      // Stop the spinner
       spinner.stop();
 
       console.log(`${chalk.redBright("Account not created yet")}`);
       return;
     }
 
+    // Delete the account
     await axios.delete(`https://api.mail.tm/accounts/${account.id}`, {
       headers: {
         Authorization: `Bearer ${account.token.token}`,
       },
     });
 
-    // delete the account from account.json file
+    // Delete the account from account.json file
     db.data.accounts.splice(accountIndex, 1);
     await db.write();
 
-
-    // stop the spinner
+    // Stop the spinner
     spinner.stop();
 
     console.log(`${chalk.blue("Account deleted")}`);
@@ -169,17 +172,15 @@ const deleteAccount = async (account) => {
   }
 };
 
-
-
-// open specific email
+// Function to open specific email
 const openEmail = async (email, mails, account) => {
   try {
-    // start the spinner
+    // Start the spinner
     const spinner = ora("opening...").start();
 
     const mailToOpen = mails[email];
 
-    // get email html content
+    // Get email html content
     const { data } = await axios.get(
       `https://api.mail.tm/messages/${mailToOpen.id}`,
       {
@@ -189,30 +190,30 @@ const openEmail = async (email, mails, account) => {
       }
     );
 
-    // write the email html content to a file
+    // Write the email html content to a file
     await fs.writeFile(path.join(dirname, "../data/email.html"), data.html[0]);
 
-    // open the email html file in the browser
+    // Open the email html file in the browser
     await open(path.join(dirname, "../data/email.html"));
 
-    // stop the spinner
+    // Stop the spinner
     spinner.stop();
   } catch (error) {
-    // stop the spinner
+    // Stop the spinner
     spinner.stop();
 
     console.error(`${chalk.redBright("Error")}: ${error.message}`);
   }
 };
 
-
+// Function to select account
 const accountSelector = async () => {
 
   await db.read();
 
   const accounts = db.data.accounts;
 
-  // display accounts using inquirer
+  // Display accounts using inquirer
   const accountIndex = await inquirer.prompt([
     {
       type: "list",
@@ -240,6 +241,7 @@ const accountSelector = async () => {
 
 };
 
+// Function to display accounts
 const displayAccounts = async () => {
   await db.read();
 
@@ -265,6 +267,7 @@ const displayAccounts = async () => {
   writeInboxCountToLocal(accounts, inboxCounts);
 }
 
+// Function to get inbox count
 const getInboxCount = async (account) => {
   const { data } = await axios.get("https://api.mail.tm/messages", {
     headers: {
@@ -274,10 +277,7 @@ const getInboxCount = async (account) => {
   return data["hydra:totalItems"];
 }
 
-
-
-
-// export the functions using es6 syntax
+// Export the functions using es6 syntax
 const utils = {
   createAccount,
   fetchMessages,
@@ -285,7 +285,6 @@ const utils = {
   openEmail,
   displayAccounts,
   accountSelector,
-
 };
 
 export default utils;
