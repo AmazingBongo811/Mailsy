@@ -46,7 +46,7 @@ program
           choices: [...emails.map((email, index) => ({
             name: `${index + 1}. ${chalk.underline.blue(
               email.subject
-            )} - ${chalk.yellow("From:")}  ${email.from.address} ${chalk.yellow("Date:")} ${new Date(email.createdAt).toLocaleString()}`,
+            )} - ${chalk.yellow("From:")}  ${email.from.address} ${chalk.yellow("Date:")} ${new Date(email.createdAt).toLocaleString('en-GB', {hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'})}`,
             value: index,
           })), { name: "Exit", value: -1 }],
         },

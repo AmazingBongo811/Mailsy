@@ -264,7 +264,7 @@ const displayAccounts = async () => {
     console.log(
       `${index + 1}. ${chalk.underline.blue(account.address)} (${inboxCounts[index] > localInboxCount[index] ? chalk.green(inboxCounts[index]) : chalk.white(inboxCounts[index])}) - ${chalk.yellow(
         "Created At"
-      )}: ${new Date(account.createdAt).toLocaleString()}`
+      )}: ${new Date(account.createdAt).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}`
     );
   });
 
